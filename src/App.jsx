@@ -236,28 +236,41 @@ function App() {
     }));
   };
 
-  const renderAdvantage = () => {
-    if (totals.difference > 0) {
+  const renderAdvantage = (difference = totals.difference, secondRocks = match.second?.rocks ?? 0) => {
+    if (difference > 0) {
+      const isWinConfirmed = difference > secondRocks;
+
+      if (isWinConfirmed) {
+        return (
+          <div className="status status-win">
+            <strong className="status-main">勝ち確定</strong>
+          </div>
+        );
+      }
+
       return (
         <div className="status status-win">
-          <strong>このままなら勝ち</strong>
-          <span>負けるのはあと{totals.difference + 1}人当てられる</span>
+          <strong className="status-main">
+            勝ち確定まで あと{secondRocks - difference + 1}人
+          </strong>
+          <span>このままなら勝ち</span>
+          <span>あと{difference + 1}人当てられると負け</span>
         </div>
       );
     }
 
-    if (totals.difference === 0) {
+    if (difference === 0) {
       return (
         <div className="status status-draw">
-          <strong>勝つにはあと1人当てる</strong>
-          <span>負けるのはあと1人当てられる</span>
+          <strong>あと1人当てれば勝ち</strong>
+          <span>あと1人当てられると負け</span>
         </div>
       );
     }
 
     return (
       <div className="status status-lose">
-        <strong>勝つにはあと{1 - totals.difference}人当てる</strong>
+        <strong>あと{1 - difference}人当てれば勝ち</strong>
         <span>このままなら負け</span>
       </div>
     );
@@ -360,6 +373,14 @@ function App() {
               opponent={match.first.opponent}
               large
             />
+            <div className="halftime-condition">
+              <span className="condition-label">後半開始時点</span>
+              {renderAdvantage(
+                match.first.rocks + match.startPlayers -
+                  (match.first.opponent + match.startPlayers),
+                match.startPlayers,
+              )}
+            </div>
             <button
               className="primary-button"
               type="button"

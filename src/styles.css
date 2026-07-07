@@ -287,8 +287,24 @@ h1 {
   font-size: 22px;
 }
 
+.status .status-main {
+  font-size: 28px;
+  line-height: 1.12;
+}
+
 .status span {
   font-size: 17px;
+}
+
+.halftime-condition {
+  display: grid;
+  gap: 8px;
+}
+
+.condition-label {
+  color: #b9c8d7;
+  font-size: 16px;
+  font-weight: 900;
 }
 
 .status-win {

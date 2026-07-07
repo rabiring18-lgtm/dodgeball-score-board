@@ -1,11 +1,11 @@
 {
-  "name": "rocks-score-board",
+  "name": "dodgeball-score-board",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --configLoader runner",
     "preview": "vite preview"
   },
   "dependencies": {

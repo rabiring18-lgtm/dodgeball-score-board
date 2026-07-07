@@ -407,9 +407,9 @@ function App() {
             finishLabel="試合終了"
           >
             <ResultLine
-              label="後半スコア"
-              rocks={currentPeriod.rocks}
-              opponent={currentPeriod.opponent}
+              label="前半スコア"
+              rocks={match.first?.rocks ?? 0}
+              opponent={match.first?.opponent ?? 0}
             />
             <ResultLine
               label="合計スコア"

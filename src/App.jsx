@@ -83,6 +83,102 @@ function ResultLine({ label, rocks, opponent, large = false }) {
   );
 }
 
+function buildAdvantageLines({
+  firstRocks,
+  firstOpponent,
+  secondRocks,
+  secondOpponent,
+}) {
+  const rocksTotal = firstRocks + secondRocks;
+  const opponentTotal = firstOpponent + secondOpponent;
+  const difference = rocksTotal - opponentTotal;
+  const statusClass =
+    difference > 0
+      ? "status-win"
+      : difference === 0
+        ? "status-draw"
+        : "status-lose";
+  const currentStatus =
+    difference > 0
+      ? "現在：リード"
+      : difference === 0
+        ? "現在：同点"
+        : "現在：ビハインド";
+  const halfEnded = secondRocks === 0 || secondOpponent === 0;
+
+  if (halfEnded) {
+    const result =
+      difference > 0
+        ? "勝ち確定"
+        : difference === 0
+          ? "引き分け確定"
+          : "逆転不可";
+    const lines = [result, "ハーフ終了", currentStatus];
+
+    if (secondRocks === 0) lines.push("ROCKS残り0人");
+    if (secondOpponent === 0) lines.push("相手残り0人");
+
+    return { lines, statusClass };
+  }
+
+  const isWinConfirmed = difference > secondRocks;
+
+  if (isWinConfirmed) {
+    return {
+      lines: ["勝ち確定", currentStatus],
+      statusClass,
+    };
+  }
+
+  const isComebackImpossible = difference < 0 && difference + secondOpponent <= 0;
+
+  if (isComebackImpossible) {
+    return {
+      lines: ["逆転不可", currentStatus],
+      statusClass,
+    };
+  }
+
+  const neededByScore = secondRocks - difference + 1;
+  const secureWinCandidates = [];
+
+  if (neededByScore >= 1 && neededByScore <= secondOpponent) {
+    secureWinCandidates.push(neededByScore);
+  }
+
+  if (difference + secondOpponent > 0) {
+    secureWinCandidates.push(secondOpponent);
+  }
+
+  const lines =
+    secureWinCandidates.length > 0
+      ? [`勝ち確定まで あと${Math.min(...secureWinCandidates)}人`]
+      : ["勝ち確定は不可"];
+
+  lines.push(currentStatus);
+
+  if (difference < 0) {
+    const neededToLead = 1 - difference;
+    if (neededToLead <= secondOpponent) {
+      lines.push(`リードまで あと${neededToLead}人`);
+    }
+  }
+
+  if (difference === 0) {
+    lines.push("あと1人当てればリード");
+    lines.push("あと1人当てられるとビハインド");
+  }
+
+  if (difference > 0) {
+    const neededHitReceivedToBehind = difference + 1;
+    if (neededHitReceivedToBehind <= secondRocks) {
+      lines.push(`あと${neededHitReceivedToBehind}人当てられるとビハインド`);
+    }
+  }
+
+  return { lines, statusClass };
+}
+
 function App() {
   const [match, setMatch] = useState(loadMatch);
 
@@ -236,42 +332,29 @@ function App() {
     }));
   };
 
-  const renderAdvantage = (difference = totals.difference, secondRocks = match.second?.rocks ?? 0) => {
-    if (difference > 0) {
-      const isWinConfirmed = difference > secondRocks;
-
-      if (isWinConfirmed) {
-        return (
-          <div className="status status-win">
-            <strong className="status-main">勝ち確定</strong>
-          </div>
-        );
-      }
-
-      return (
-        <div className="status status-win">
-          <strong className="status-main">
-            勝ち確定まで あと{secondRocks - difference + 1}人
-          </strong>
-          <span>このままなら勝ち</span>
-          <span>あと{difference + 1}人当てられると負け</span>
-        </div>
-      );
-    }
-
-    if (difference === 0) {
-      return (
-        <div className="status status-draw">
-          <strong>あと1人当てれば勝ち</strong>
-          <span>あと1人当てられると負け</span>
-        </div>
-      );
-    }
-
+  const renderAdvantage = ({
+    firstRocks = match.first?.rocks ?? 0,
+    firstOpponent = match.first?.opponent ?? 0,
+    secondRocks = match.second?.rocks ?? 0,
+    secondOpponent = match.second?.opponent ?? 0,
+  } = {}) => {
+    const { lines, statusClass } = buildAdvantageLines({
+      firstRocks,
+      firstOpponent,
+      secondRocks,
+      secondOpponent,
+    });
     return (
-      <div className="status status-lose">
-        <strong>あと{1 - difference}人当てれば勝ち</strong>
-        <span>このままなら負け</span>
+      <div className={`status ${statusClass}`}>
+        {lines.map((line, index) =>
+          index === 0 ? (
+            <strong className="status-main" key={line}>
+              {line}
+            </strong>
+          ) : (
+            <span key={line}>{line}</span>
+          ),
+        )}
       </div>
     );
   };
@@ -375,11 +458,12 @@ function App() {
             />
             <div className="halftime-condition">
               <span className="condition-label">後半開始時点</span>
-              {renderAdvantage(
-                match.first.rocks + match.startPlayers -
-                  (match.first.opponent + match.startPlayers),
-                match.startPlayers,
-              )}
+              {renderAdvantage({
+                firstRocks: match.first.rocks,
+                firstOpponent: match.first.opponent,
+                secondRocks: match.startPlayers,
+                secondOpponent: match.startPlayers,
+              })}
             </div>
             <button
               className="primary-button"
@@ -503,13 +587,19 @@ function GameScreen({
       {children && <div className="score-stack">{children}</div>}
 
       <div className="action-grid">
-        <button className="hit-button" type="button" onClick={onHit}>
+        <button
+          className="hit-button"
+          type="button"
+          onClick={onHit}
+          disabled={period.opponent === 0}
+        >
           ROCKSが当てた
         </button>
         <button
           className="hurt-button"
           type="button"
           onClick={onHitByOpponent}
+          disabled={period.rocks === 0}
         >
           ROCKSが当てられた
         </button>

@@ -1,0 +1,20 @@
+{
+  "name": "ROCKS 点数ボード",
+  "short_name": "点数ボード",
+  "description": "ROCKSの試合中に使う簡易点数ボード",
+  "id": "/dodgeball-score-board/",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#06101f",
+  "background_color": "#06101f",
+  "icons": [
+    {
+      "src": "icons/score-board-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

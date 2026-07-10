@@ -262,7 +262,8 @@ function App() {
   const score = (periodKey, target) => {
     setMatch((current) => {
       const period = current[periodKey];
-      if (!period || period[target] <= 0) return current;
+      const halfEnded = period?.rocks === 0 || period?.opponent === 0;
+      if (!period || halfEnded || period[target] <= 0) return current;
       return {
         ...current,
         [periodKey]: {
@@ -563,6 +564,8 @@ function GameScreen({
   finishLabel,
   children,
 }) {
+  const halfEnded = period.rocks === 0 || period.opponent === 0;
+
   return (
     <div className="screen game-screen">
       <div className="phase-header">
@@ -591,7 +594,7 @@ function GameScreen({
           className="hit-button"
           type="button"
           onClick={onHit}
-          disabled={period.opponent === 0}
+          disabled={halfEnded}
         >
           ROCKSが当てた
         </button>
@@ -599,7 +602,7 @@ function GameScreen({
           className="hurt-button"
           type="button"
           onClick={onHitByOpponent}
-          disabled={period.rocks === 0}
+          disabled={halfEnded}
         >
           ROCKSが当てられた
         </button>
